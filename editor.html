@@ -218,7 +218,7 @@ html, body { margin: 0; padding: 0; }
 /* ═══════════════ הוכחה חברתית ═══════════════ */
 #iris-lp .social { background: var(--bg); }
 #iris-lp .rv-carousel { position: relative; display: flex; align-items: center; gap: .5em; max-width: 780px; margin: 0 auto; }
-#iris-lp .rv-stage { position: relative; flex: 1; min-height: 220px; }
+#iris-lp .rv-stage { position: relative; flex: 1; min-height: 200px; transition: min-height .45s ease; }
 #iris-lp .rv-card {
   position: absolute; top: 0; right: 0; left: 0; margin: 0 auto;
   width: min(430px, 100%);
@@ -242,6 +242,11 @@ html, body { margin: 0; padding: 0; }
   transition: background .15s ease, transform .15s ease;
 }
 #iris-lp .rv-nav:hover { background: var(--blush); transform: scale(1.08); }
+@media (max-width: 560px) {
+  #iris-lp .rv-card { padding: 1.15em 1.1em; }
+  #iris-lp .rv-card p { font-size: .92em; line-height: 1.55; }
+  #iris-lp .rv-nav { width: 36px; height: 36px; font-size: 1.2em; }
+}
 #iris-lp .stars { color: var(--gold); font-size: 1.05em; letter-spacing: .12em; }
 #iris-lp .rv-card p { color: var(--ink); font-size: .98em; flex: 1; }
 #iris-lp .rv-card .who { display: flex; align-items: center; gap: .7em; }
@@ -317,6 +322,20 @@ html, body { margin: 0; padding: 0; }
 #iris-lp .offer-item b { display: block; }
 #iris-lp .offer-item small { color: var(--muted); }
 #iris-lp .offer-item .price { margin-inline-start: auto; font-weight: 800; color: var(--muted); white-space: nowrap; }
+@media (max-width: 560px) {
+  #iris-lp .offer-body { padding: 1.1em 1em; }
+  #iris-lp .offer-item { gap: .55em; padding: .7em 0; }
+  #iris-lp .offer-item .check { width: 24px; height: 24px; font-size: .8em; margin-top: .1em; }
+  #iris-lp .offer-item b { font-size: .95em; line-height: 1.4; }
+  #iris-lp .offer-item small { font-size: .84em; line-height: 1.45; }
+  #iris-lp .offer-item .price {
+    align-self: center; font-size: .78em;
+    background: var(--blush); color: var(--terra-dark);
+    padding: .2em .65em; border-radius: 999px;
+  }
+  #iris-lp .offer-total { padding: .85em 1em; gap: .4em; }
+  #iris-lp .offer-total .now { font-size: 1.1em; }
+}
 #iris-lp .offer-total {
   margin-top: 1.1em; background: var(--bg); border-radius: 14px; padding: 1em 1.2em;
   display: flex; align-items: center; justify-content: space-between; gap: 1em; flex-wrap: wrap;
@@ -628,7 +647,7 @@ html, body { margin: 0; padding: 0; }
           <div class="rv-stage" id="rv-stage">
           <article class="rv-card">
             <span class="stars" aria-label="דירוג 5 מתוך 5 כוכבים">★★★★★</span>
-            <p>"אני יותר מ-3 שנים אצל איריס.<br>מקצועית בטירוף, מדייקת כל תנועה ונותנת תשומת לב אישית.<br>בזכותה גיליתי שרירים שלא ידעתי שקיימים, היציבה השתפרה, ואני יוצאת מכל שיעור חזקה יותר ומלאה באנרגיות.<br>סטודיו ברמה הגבוהה ביותר!"</p>
+            <p>"אני יותר מ-3 שנים אצל איריס.<br>מקצועית בטירוף, מדייקת כל תנועה ונותנת תשומת לב אישית.<br>יוצאת מכל שיעור חזקה יותר ומלאה באנרגיות.<br>סטודיו ברמה הגבוהה ביותר!"</p>
             <div class="who"><span class="avatar" aria-hidden="true">בת</span><span>בת-אל מואטו · ביקורת מגוגל</span></div>
           </article>
           <article class="rv-card">
@@ -980,11 +999,15 @@ html, body { margin: 0; padding: 0; }
       });
     }
     function setHeight() {
+      var mobile = window.matchMedia('(max-width: 759px)').matches;
+      var pool = mobile
+        ? [cards[cur]]
+        : [cards[cur], cards[(cur - 1 + n) % n], cards[(cur + 1) % n]];
       var h = 0;
-      cards.forEach(function (c) { h = Math.max(h, c.offsetHeight); });
+      pool.forEach(function (c) { h = Math.max(h, c.offsetHeight); });
       if (h) stage.style.minHeight = (h + 8) + 'px';
     }
-    function go(step) { cur = (cur + step + n) % n; render(); }
+    function go(step) { cur = (cur + step + n) % n; render(); setHeight(); }
     function stop() { if (timer) { clearInterval(timer); timer = null; } }
     function play() {
       stop();
