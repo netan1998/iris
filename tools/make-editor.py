@@ -295,6 +295,117 @@ body.ed-del-mode #iris-lp .ed-text:hover { outline: none; cursor: crosshair; }
 </body>"""
 
 
+SIMPLE_EDITOR_TEMPLATE = r"""
+<style id="iris-editor-css">
+#iris-editor-bar {
+  position: fixed; top: 0; right: 0; left: 0; z-index: 1000;
+  background: #10243E; color: #fff; direction: rtl;
+  display: flex; align-items: center; flex-wrap: wrap; gap: 10px;
+  padding: 10px 16px; font-family: 'Heebo', Arial, sans-serif; font-size: 15px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.35);
+}
+#iris-editor-bar .ttl { font-weight: 800; }
+#iris-editor-bar .hint { opacity: .85; font-size: 13px; flex: 1; min-width: 180px; }
+#iris-editor-bar button {
+  font: inherit; font-weight: 700; cursor: pointer; border: none; border-radius: 10px;
+  padding: 8px 14px; min-height: 40px; background: #24466E; color: #fff;
+}
+#iris-editor-bar #ed-save { background: #1E9E5A; font-weight: 800; }
+body { padding-top: 74px !important; }
+.ed-text:hover { outline: 2px dashed #1668C7; outline-offset: 2px; cursor: text; }
+.ed-text:focus { outline: 2px solid #1668C7 !important; outline-offset: 2px; background: rgba(22,104,199,.07); }
+#iris-editor-toast {
+  position: fixed; bottom: 30px; right: 50%; transform: translateX(50%); z-index: 1001;
+  background: #10243E; color: #fff; direction: rtl; text-align: center;
+  padding: 12px 22px; border-radius: 12px; font-family: 'Heebo', Arial, sans-serif;
+  font-weight: 700; box-shadow: 0 8px 24px rgba(0,0,0,.35); display: none; max-width: 90vw;
+}
+</style>
+
+<div id="iris-editor-bar" dir="rtl">
+  <span class="ttl">🖊 מצב עריכה - __PAGE_LABEL__</span>
+  <span class="hint">לחיצה על כל טקסט = עריכה</span>
+  <button type="button" id="ed-reset">↺ איפוס</button>
+  <button type="button" id="ed-save">💾 שמירה והורדת הקובץ</button>
+</div>
+<div id="iris-editor-toast" role="status"></div>
+
+<script id="iris-editor-js">
+(function () {
+  'use strict';
+  var robots = document.createElement('meta');
+  robots.name = 'robots';
+  robots.content = 'noindex, nofollow';
+  robots.id = 'iris-editor-robots';
+  document.head.appendChild(robots);
+
+  var SEL = 'h1,h2,h3,h4,p,li,small,span,b,strong,em,a';
+  document.querySelectorAll('body ' + SEL.split(',').join(',body ')).forEach(function (el) {
+    if (el.closest('#iris-editor-bar') || el.id === 'iris-editor-toast') return;
+    if (el.closest('.ed-text') && el.closest('.ed-text') !== el) return;
+    if (el.querySelector('img, svg')) return;
+    if (!el.textContent.trim()) return;
+    el.classList.add('ed-text');
+    el.setAttribute('contenteditable', 'true');
+    el.setAttribute('spellcheck', 'false');
+  });
+
+  document.addEventListener('click', function (e) {
+    if (e.target.closest('#iris-editor-bar')) return;
+    var a = e.target.closest('a');
+    if (a && !a.hasAttribute('download')) e.preventDefault();
+  }, true);
+
+  function buildCleanHtml() {
+    var clone = document.documentElement.cloneNode(true);
+    ['#iris-editor-bar', '#iris-editor-css', '#iris-editor-js', '#iris-editor-toast', '#iris-editor-robots']
+      .forEach(function (sel) {
+        var el = clone.querySelector(sel);
+        if (el) el.remove();
+      });
+    clone.querySelectorAll('[contenteditable]').forEach(function (el) {
+      el.removeAttribute('contenteditable');
+      el.removeAttribute('spellcheck');
+      el.classList.remove('ed-text');
+      if (!el.getAttribute('class')) el.removeAttribute('class');
+    });
+    return '<!DOCTYPE html>\n' + clone.outerHTML;
+  }
+
+  var toastEl = document.getElementById('iris-editor-toast');
+  var toastTimer = null;
+  function toast(msg) {
+    toastEl.textContent = msg;
+    toastEl.style.display = 'block';
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toastEl.style.display = 'none'; }, 4500);
+  }
+
+  document.getElementById('ed-save').addEventListener('click', function () {
+    var blob = new Blob([buildCleanHtml()], { type: 'text/html;charset=utf-8' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = '__DOWNLOAD_NAME__';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    toast('הקובץ __DOWNLOAD_NAME__ ירד למחשב 🎉 שלחו לי אותו');
+  });
+  document.getElementById('ed-reset').addEventListener('click', function () {
+    if (confirm('לאפס את כל השינויים שלא נשמרו?')) location.reload();
+  });
+
+  window.__irisEditor = { buildCleanHtml: buildCleanHtml };
+})();
+</script>
+</body>"""
+
+SIMPLE_PAGES = [
+    ("thanks.html", "edit-thanks-x74q9.html", "דף תודה"),
+    ("terms.html", "edit-terms-x74q9.html", "תקנון"),
+]
+
+
 def main():
     src = (ROOT / "index.html").read_text()
     out = src.replace("</body>", EDITOR_BLOCK, 1)
@@ -302,6 +413,16 @@ def main():
     (ROOT / "editor.html").write_text(out)
     (ROOT / PUBLIC_NAME).write_text(out)
     print(f"written: editor.html + {PUBLIC_NAME} ({len(out)//1024} KB)")
+
+    for src_name, out_name, label in SIMPLE_PAGES:
+        page = (ROOT / src_name).read_text()
+        block = (SIMPLE_EDITOR_TEMPLATE
+                 .replace("__PAGE_LABEL__", label)
+                 .replace("__DOWNLOAD_NAME__", src_name))
+        out = page.replace("</body>", block, 1)
+        assert out != page, f"no </body> in {src_name}"
+        (ROOT / out_name).write_text(out)
+        print(f"written: {out_name} ({len(out)//1024} KB)")
 
 
 if __name__ == "__main__":

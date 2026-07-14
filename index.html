@@ -884,7 +884,29 @@ html, body { margin: 0; padding: 0; }
   var yearEl = document.getElementById('iris-year');
   if (yearEl) yearEl.textContent = new Date().getFullYear();
 
-  /* ── טפסי לידים → וואטסאפ ── */
+  /* ── שמירת לידים לגוגל שיטס ──
+     ✏️ מדביקים כאן, בין הגרשיים, את כתובת ה-Web App מ-Google Apps Script
+     (הוראות הקמה מלאות בקובץ tools/google-sheets-webhook.gs) */
+  var SHEETS_WEBHOOK_URL = '';
+
+  function sendLead(name, phone) {
+    if (!SHEETS_WEBHOOK_URL) return;
+    var data = JSON.stringify({
+      name: name,
+      phone: phone,
+      page: location.href,
+      time: new Date().toISOString()
+    });
+    try {
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon(SHEETS_WEBHOOK_URL, new Blob([data], { type: 'text/plain;charset=UTF-8' }));
+      } else {
+        fetch(SHEETS_WEBHOOK_URL, { method: 'POST', mode: 'no-cors', keepalive: true, body: data });
+      }
+    } catch (e) { /* שליחת הליד לא חוסמת את הזרימה */ }
+  }
+
+  /* ── טפסי לידים → גוגל שיטס + וואטסאפ + דף תודה ── */
   var WA_NUMBER = '972548882850';
   var forms = root.querySelectorAll('.lead-form');
   forms.forEach(function (form) {
@@ -911,6 +933,8 @@ html, body { margin: 0; padding: 0; }
       }
 
       if (!ok) return;
+
+      sendLead(name, phoneField.value.trim());
 
       var msg = 'היי איריס 🙂 אשמח להצטרף לשבוע פילאטיס מכשירים בחינם.\n'
               + 'שם: ' + name + '\n'
