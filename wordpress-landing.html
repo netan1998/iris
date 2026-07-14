@@ -140,6 +140,8 @@ html, body { margin: 0; padding: 0; }
 }
 
 #iris-lp .hero h1 { font-size: clamp(2.1em, 6vw, 3.4em); font-weight: 900; max-width: 16em; margin: 0 auto .35em; }
+#iris-lp .br-m { display: none; }
+@media (max-width: 759px) { #iris-lp .br-m { display: initial; } }
 #iris-lp .hero h1 .hl {
   color: var(--terra);
   background: linear-gradient(transparent 62%, var(--blush) 62%);
@@ -535,7 +537,7 @@ html, body { margin: 0; padding: 0; }
       <div class="wrap hero-grid">
         <div>
           <p class="eyebrow">📍 לנשים מראשון לציון מערב</p>
-          <h1>הצטרפי עכשיו ל<span class="hl">שבוע החוזק</span><br>בפילאטיס מכשירים במתנה!</h1>
+          <h1>הצטרפי עכשיו<br class="br-m"> ל<span class="hl">שבוע החוזק</span><br>בפילאטיס מכשירים במתנה!</h1>
           <p class="hero-small">קבלי מאיתנו שבוע שלם של פילאטיס מכשירים במתנה<br>לחיזוק הליבה, מיצוק הגוף ושחרור כאבי גב וצוואר</p>
           <p class="hero-spots">פתוח החודש ל-12 נשים בלבד</p>
         </div>
